@@ -461,7 +461,7 @@
     }
     .t-signature-wrap { margin-top: 36px; padding-left: 180px; }
     .t-signature {
-      font-family: var(--sig-font, 'Caveat Brush', cursive);
+      font-family: var(--note-font, 'Caveat', cursive);
       font-size: var(--sig-size, 32px);
       font-weight: var(--font-weight, 400);
       color: var(--ink); display: inline-block; line-height: 1.1;
@@ -937,10 +937,9 @@ Looking forward to many more evenings like this one.</textarea>
   function applyFont() {
     const f = FONTS[currentFont] || FONTS['caveat'];
     const r = document.documentElement.style;
-    r.setProperty('--note-font',   f.body);
-    r.setProperty('--note-size',   f.bodySize + 'px');
-    r.setProperty('--sig-font',    f.body);
-    r.setProperty('--sig-size',    f.sigSize + 'px');
+    r.setProperty('--note-font', f.body);
+    r.setProperty('--note-size', f.bodySize + 'px');
+    r.setProperty('--sig-size',  f.sigSize + 'px');
     r.setProperty('--font-weight', currentWeight);
   }
 
