@@ -366,23 +366,48 @@
     .t-date {
       display: flex; justify-content: flex-end;
       font-family: var(--note-font, 'Caveat', cursive);
-      font-size: calc(var(--note-size, 22px) * 0.87); line-height: 36px; color: var(--ink);
+      font-size: calc(var(--note-size, 22px) * 0.87);
+      font-weight: var(--font-weight, 400);
+      line-height: 36px; color: var(--ink);
     }
     .t-salutation {
       font-family: var(--note-font, 'Caveat', cursive);
-      font-size: var(--note-size, 22px); line-height: 36px; color: var(--ink);
+      font-size: var(--note-size, 22px);
+      font-weight: var(--font-weight, 400);
+      line-height: 36px; color: var(--ink);
     }
     .t-body {
       font-family: var(--note-font, 'Caveat', cursive);
-      font-size: var(--note-size, 22px); line-height: 36px; color: var(--ink);
+      font-size: var(--note-size, 22px);
+      font-weight: var(--font-weight, 400);
+      line-height: 36px; color: var(--ink);
       min-height: 504px; word-break: break-word;
     }
     .t-signature-wrap { margin-top: 36px; padding-left: 180px; }
     .t-signature {
       font-family: var(--sig-font, 'Caveat Brush', cursive);
-      font-size: var(--sig-size, 32px); color: var(--ink);
-      display: inline-block; line-height: 1.1;
+      font-size: var(--sig-size, 32px);
+      font-weight: var(--font-weight, 400);
+      color: var(--ink); display: inline-block; line-height: 1.1;
     }
+
+    /* ── Pen weight ──────────────────────────────────── */
+    .weight-row { display: flex; gap: 6px; }
+    .weight-btn {
+      flex: 1;
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      padding: 7px 4px;
+      color: #7A8A9C;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .weight-btn:hover { background: rgba(255,255,255,0.08); color: #B0C0D0; }
+    .weight-btn.selected { border-color: #3B6EC8; background: rgba(59,110,200,0.12); color: #90B4E8; }
 
     /* ── Font picker ──────────────────────────────────── */
     .font-group-label {
@@ -399,6 +424,50 @@
     }
     .font-btn:hover { background: rgba(255,255,255,0.08); color: #C0CEDC; }
     .font-btn.selected { border-color: #3B6EC8; background: rgba(59,110,200,0.12); color: #90B4E8; }
+
+    /* ── Stationery prompt + upload ──────────────────── */
+    .preset-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+    .chip {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 4px 10px;
+      color: #6A7A8E;
+      font-size: 11px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover { background: rgba(255,255,255,0.08); color: #A0B4C8; border-color: rgba(255,255,255,0.15); }
+
+    .upload-zone {
+      border: 1.5px dashed rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+    }
+    .upload-zone:hover { border-color: rgba(59,110,200,0.5); background: rgba(59,110,200,0.05); }
+    .upload-zone.has-image { border-style: solid; border-color: rgba(59,110,200,0.4); }
+    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-zone-label { font-size: 11.5px; color: #5C6A7E; pointer-events: none; }
+    .upload-zone-label span { color: #7090B8; }
+    .upload-preview {
+      width: 100%; max-height: 80px; object-fit: cover;
+      border-radius: 4px; display: none; pointer-events: none;
+    }
+    .upload-zone.has-image .upload-preview { display: block; }
+    .upload-zone.has-image .upload-zone-label { display: none; }
+    .upload-clear {
+      position: absolute; top: 6px; right: 6px;
+      background: rgba(0,0,0,0.5); color: #AAB; border: none;
+      border-radius: 4px; width: 20px; height: 20px;
+      font-size: 11px; cursor: pointer; display: none;
+      align-items: center; justify-content: center;
+    }
+    .upload-zone.has-image .upload-clear { display: flex; }
 
     /* ── Ink swatches ─────────────────────────────────── */
     .ink-palette { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -505,6 +574,18 @@ Looking forward to many more evenings like this one.</textarea>
           <label>Signature</label>
           <input id="signature" type="text" value="Sunil" placeholder="Closing signature">
         </div>
+        <!-- Pen weight -->
+        <div class="field">
+          <label>Pen Weight</label>
+          <div class="weight-row" id="weight-row">
+            <button class="weight-btn" data-w="300" onclick="selectWeight(this)" style="font-weight:300">Fine</button>
+            <button class="weight-btn selected" data-w="400" onclick="selectWeight(this)" style="font-weight:400">Regular</button>
+            <button class="weight-btn" data-w="500" onclick="selectWeight(this)" style="font-weight:500">Medium</button>
+            <button class="weight-btn" data-w="600" onclick="selectWeight(this)" style="font-weight:600">Bold</button>
+            <button class="weight-btn" data-w="700" onclick="selectWeight(this)" style="font-weight:700">Heavy</button>
+          </div>
+        </div>
+
         <!-- Font picker -->
         <div class="field">
           <label>Handwriting Style</label>
@@ -581,13 +662,33 @@ Looking forward to many more evenings like this one.</textarea>
         </div>
         <button class="btn btn-secondary" style="font-size:12px;padding:9px" onclick="saveKey()">Save Key</button>
 
-        <div class="section-label">Style</div>
-        <div class="style-grid" id="style-grid">
-          <button class="style-btn selected" data-style="classic"  onclick="selectStyle(this)">Classic Cream</button>
-          <button class="style-btn"          data-style="botanical" onclick="selectStyle(this)">Botanical</button>
-          <button class="style-btn"          data-style="artdeco"  onclick="selectStyle(this)">Art Deco</button>
-          <button class="style-btn"          data-style="minimal"  onclick="selectStyle(this)">Minimal</button>
-          <button class="style-btn"          data-style="vintage"  onclick="selectStyle(this)">Vintage</button>
+        <div class="field">
+          <label>Style Description</label>
+          <textarea id="style-prompt" rows="3"
+            placeholder="Describe the stationery you want, e.g. 'Japanese cherry blossom, pastel pink and gold, watercolor style'&#10;&#10;Or pick a preset below ↓"
+            style="min-height:80px;line-height:1.5"></textarea>
+        </div>
+
+        <div class="preset-chips">
+          <button class="chip" onclick="fillPreset('classic')">Classic Cream</button>
+          <button class="chip" onclick="fillPreset('botanical')">Botanical</button>
+          <button class="chip" onclick="fillPreset('artdeco')">Art Deco</button>
+          <button class="chip" onclick="fillPreset('minimal')">Minimal</button>
+          <button class="chip" onclick="fillPreset('vintage')">Vintage</button>
+          <button class="chip" onclick="fillPreset('japanese')">Japanese</button>
+          <button class="chip" onclick="fillPreset('floral_border')">Floral Border</button>
+        </div>
+
+        <div class="field">
+          <label>Inspiration Image (optional)</label>
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="inspiration-file" accept="image/*" onchange="handleUpload(event)">
+            <img class="upload-preview" id="upload-preview" alt="inspiration">
+            <button class="upload-clear" onclick="clearUpload(event)" title="Remove">✕</button>
+            <div class="upload-zone-label">
+              Click or drag an image<br><span>Flux will use it as style reference</span>
+            </div>
+          </div>
         </div>
 
         <button class="generate-btn" id="gen-btn" onclick="generateStationery()">
@@ -670,13 +771,21 @@ Looking forward to many more evenings like this one.</textarea>
   function render(text, base) {
     if (!text) return '';
     let off = base;
-    return text.split('\n').map(line => {
-      if (!line.trim()) { off += 8; return ''; }
-      return line.split(' ').map(w => {
+    return text.split('\n').map((line, li) => {
+      if (!line.trim()) {
+        off += 8;
+        return '<span style="display:block;height:36px"></span>';
+      }
+      // Per-line random tilt (-0.5° to +0.5°) and vertical drift (-3px to +3px)
+      // Makes writing look like a real human hand — not perfectly horizontal
+      const tilt  = (sr(base + li * 13 + 77) - 0.5) * 1.0;
+      const drift = (sr(base + li * 17 +  3) - 0.5) * 6;
+      const words = line.split(' ').map(w => {
         if (!w) { off += 2; return ''; }
         const h = word(w, off); off += w.length + 3; return h;
       }).filter(Boolean).join(' ');
-    }).join('<br>');
+      return `<span style="display:block;transform:translateY(${drift.toFixed(1)}px) rotate(${tilt.toFixed(2)}deg);transform-origin:left center;line-height:36px">${words}</span>`;
+    }).join('');
   }
 
   // ── Font definitions ───────────────────────────────────
@@ -700,13 +809,23 @@ Looking forward to many more evenings like this one.</textarea>
     applyFont();
   }
 
+  let currentWeight = '400';
+
   function applyFont() {
     const f = FONTS[currentFont] || FONTS['caveat'];
     const r = document.documentElement.style;
-    r.setProperty('--note-font', f.body);
-    r.setProperty('--note-size', f.bodySize + 'px');
-    r.setProperty('--sig-font',  f.sig);
-    r.setProperty('--sig-size',  f.sigSize + 'px');
+    r.setProperty('--note-font',   f.body);
+    r.setProperty('--note-size',   f.bodySize + 'px');
+    r.setProperty('--sig-font',    f.sig);
+    r.setProperty('--sig-size',    f.sigSize + 'px');
+    r.setProperty('--font-weight', currentWeight);
+  }
+
+  function selectWeight(btn) {
+    document.querySelectorAll('.weight-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    currentWeight = btn.dataset.w;
+    applyFont();
   }
 
   // ── Ink swatch handler ─────────────────────────────────
@@ -813,15 +932,47 @@ Looking forward to many more evenings like this one.</textarea>
     }).then(() => setStatus('Key saved', 'ok')).catch(() => setStatus('Save failed', 'error'));
   }
 
-  // ── Style selection ─────────────────────────────────────
-  let selectedStyle = 'classic';
-  function selectStyle(btn) {
-    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedStyle = btn.dataset.style;
+  // ── Preset descriptions (mirror server PROMPTS keys) ────
+  const PRESET_LABELS = {
+    classic:      'Classic Cream',
+    botanical:    'Botanical watercolor flowers, dusty rose and sage, cream paper',
+    artdeco:      'Art Deco geometric gold and navy border, 1920s luxury, cream paper',
+    minimal:      'Ultra-minimalist, natural linen texture, single border line, small botanical sprig',
+    vintage:      'Vintage aged sepia paper, Victorian scrollwork border, antique charm',
+    japanese:     'Japanese cherry blossom watercolor, soft pink and white, washi paper feel',
+    floral_border:'Watercolor roses and greenery border frame, elegant floral, cream paper',
+  };
+
+  function fillPreset(key) {
+    document.getElementById('style-prompt').value = PRESET_LABELS[key] || key;
   }
 
-  // ── Generate ────────────────────────────────────────────
+  // ── Inspiration image upload ─────────────────────────────
+  let inspirationB64 = '';
+
+  function handleUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      inspirationB64 = ev.target.result; // full data URI
+      const zone = document.getElementById('upload-zone');
+      const preview = document.getElementById('upload-preview');
+      preview.src = inspirationB64;
+      zone.classList.add('has-image');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearUpload(e) {
+    e.stopPropagation();
+    inspirationB64 = '';
+    document.getElementById('upload-zone').classList.remove('has-image');
+    document.getElementById('upload-preview').src = '';
+    document.getElementById('inspiration-file').value = '';
+  }
+
+  // ── Generate ─────────────────────────────────────────────
   function setStatus(msg, type = '') {
     const el = document.getElementById('status-msg');
     el.textContent = msg;
@@ -829,20 +980,26 @@ Looking forward to many more evenings like this one.</textarea>
   }
 
   async function generateStationery() {
-    const btn = document.getElementById('gen-btn');
-    const icon = document.getElementById('gen-icon');
+    const btn   = document.getElementById('gen-btn');
+    const icon  = document.getElementById('gen-icon');
     const label = document.getElementById('gen-label');
     btn.disabled = true;
     btn.classList.add('generating');
     icon.style.display = 'none';
+    const hasRef = !!inspirationB64;
     label.textContent = 'Generating…';
-    setStatus('Calling Flux Pro — usually 20–40 s…');
+    setStatus((hasRef ? 'Using Flux Flex with your inspiration image' : 'Calling Flux Pro') + ' — usually 20–40 s…');
 
     try {
+      const customPrompt = document.getElementById('style-prompt').value.trim();
       const r = await fetch('/api/generate-stationery', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({style: selectedStyle})
+        body: JSON.stringify({
+          style:         'classic',
+          custom_prompt: customPrompt,
+          reference_b64: inspirationB64,
+        })
       });
       if (!r.ok) {
         const err = await r.json().catch(() => ({detail: r.statusText}));

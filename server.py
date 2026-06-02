@@ -24,12 +24,14 @@ def _save(d: dict):
     CONFIG_FILE.write_text(json.dumps(d, indent=2))
 
 
-# ── Settings ────────────────────────────────────────────────────────────────
+# ── Health ───────────────────────────────────────────────────────────────────
 
 @app.get("/health")
 def health():
     return {"status": "ok"}
 
+
+# ── Settings ─────────────────────────────────────────────────────────────────
 
 @app.get("/api/settings")
 def get_settings():
@@ -55,7 +57,7 @@ def update_settings(body: SettingsIn):
     return {"ok": True}
 
 
-# ── Stationery list ─────────────────────────────────────────────────────────
+# ── Stationery list ───────────────────────────────────────────────────────────
 
 @app.get("/api/stationery")
 def list_stationery():
@@ -68,47 +70,72 @@ def list_stationery():
     ]
 
 
-# ── Stationery prompts ───────────────────────────────────────────────────────
+# ── Stationery prompts ────────────────────────────────────────────────────────
+
+# Suffix appended to every prompt to ensure stationery is usable for writing
+_SUFFIX = (
+    " Decorative elements ONLY at the very top header and narrow side margins. "
+    "The lower three-quarters must be a clear, light, open writing area with faint ruled lines. "
+    "Portrait 8.5x11 paper ratio. No text, no words, no handwriting. Flat lay top-down."
+)
 
 PROMPTS: dict[str, str] = {
     "classic": (
-        "Elegant personal letter stationery, portrait 8.5x11 ratio, cream ivory paper texture, "
-        "ornate Victorian calligraphic border flourishes at the very top edge of the page in navy blue ink, "
-        "subtle ruled horizontal writing lines across the lower two-thirds, faint left margin line in soft red, "
-        "sophisticated muted palette of ivory and navy, no text, no words, flat lay top-down"
+        "Elegant personal letter stationery. Cream ivory paper texture. "
+        "Ornate Victorian calligraphic border flourishes confined to the top 20% header band "
+        "in navy blue ink, with a thin double rule line separating header from writing area."
+        + _SUFFIX
     ),
     "botanical": (
-        "Elegant personal stationery paper, portrait 8.5x11 ratio, "
-        "soft watercolor botanical illustration of delicate flowers and eucalyptus leaves, "
-        "muted dusty rose and sage green tones clustered in top corners only, "
-        "clean cream center with faint pale blue ruled writing lines, left margin line, "
-        "no text, no words, premium paper, flat lay"
+        "Personal stationery with soft watercolor botanical illustration. "
+        "Delicate flowers and eucalyptus leaves in dusty rose and sage green, "
+        "clustered ONLY in the top header band and optionally small accents in the bottom corners. "
+        "Clean cream center writing area with faint pale blue ruled lines."
+        + _SUFFIX
     ),
     "artdeco": (
-        "Art Deco personal stationery letterhead, portrait 8.5x11 ratio, "
-        "geometric gold and deep navy ornamental border frame at the very top, symmetrical architectural motifs, "
-        "1920s luxury aesthetic, cream paper with subtle texture, "
-        "faint ruled writing lines in lower portion, no text, no words, flat lay"
+        "Art Deco personal stationery letterhead. "
+        "Geometric gold and deep navy ornamental motifs confined to the top 25% header band, "
+        "symmetrical fan and diamond patterns, 1920s luxury aesthetic. "
+        "Cream paper below with very faint ruled lines for writing."
+        + _SUFFIX
     ),
     "minimal": (
-        "Ultra-minimalist personal stationery, portrait 8.5x11 ratio, "
-        "warm white natural linen paper texture, single thin elegant border line at top, "
-        "very faint ruled lines for writing, tiny delicate botanical ink sprig in upper-right corner only, "
-        "Scandinavian clean aesthetic, no text, no words, flat lay"
+        "Ultra-minimalist personal stationery. "
+        "Warm white natural linen paper. Single thin elegant border line at the very top. "
+        "Tiny delicate botanical ink sprig ONLY in the upper-right corner of the header. "
+        "Vast clean writing area below with barely-visible ruled lines. Scandinavian aesthetic."
+        + _SUFFIX
     ),
     "vintage": (
-        "Vintage aged personal letter stationery, portrait 8.5x11 ratio, "
-        "warm sepia-toned antique paper with subtle yellowing at edges, "
-        "ornate Victorian scrollwork decorative border at top, faint ruled writing lines, "
-        "old-world charm, no text, no words, flat lay top-down"
+        "Vintage aged personal letter stationery. "
+        "Warm sepia-toned antique paper with subtle yellowing. "
+        "Ornate Victorian scrollwork border band at the very top only. "
+        "Large open writing area below with faint aged ruled lines."
+        + _SUFFIX
+    ),
+    "japanese": (
+        "Japanese minimalist personal stationery. "
+        "Delicate cherry blossom branch watercolor painting ONLY along the top header band, "
+        "soft pink and white tones on warm ivory washi-like paper. "
+        "Vast serene writing area below with very faint pale grey ruled lines."
+        + _SUFFIX
+    ),
+    "floral_border": (
+        "Elegant personal stationery with a floral border frame. "
+        "Detailed watercolor roses and greenery forming a decorative band ONLY at the top. "
+        "Cream paper writing area below with faint ruled lines."
+        + _SUFFIX
     ),
 }
 
 
-# ── Generate ─────────────────────────────────────────────────────────────────
+# ── Generate ──────────────────────────────────────────────────────────────────
 
 class GenerateIn(BaseModel):
     style: str = "classic"
+    custom_prompt: str = ""    # free-text description; overrides preset if non-empty
+    reference_b64: str = ""    # base64 inspiration image (with or without data URI prefix)
 
 @app.post("/api/generate-stationery")
 async def generate_stationery(body: GenerateIn):
@@ -117,32 +144,46 @@ async def generate_stationery(body: GenerateIn):
     if not api_key:
         raise HTTPException(400, "BFL API key not configured — add it in ⚙ Settings")
 
-    prompt = PROMPTS.get(body.style, PROMPTS["classic"])
+    # Build prompt
+    if body.custom_prompt.strip():
+        prompt = body.custom_prompt.strip() + _SUFFIX
+    else:
+        prompt = PROMPTS.get(body.style, PROMPTS["classic"])
+
+    # Use flux-2-flex when a reference image is provided (supports image conditioning)
+    has_ref = bool(body.reference_b64.strip())
+    model   = "flux-2-flex" if has_ref else "flux-pro-1.1"
+
+    req_body: dict = {
+        "prompt":            prompt,
+        "width":             832,
+        "height":            1088,
+        "output_format":     "jpeg",
+        "prompt_upsampling": True,
+    }
+
+    if has_ref:
+        ref = body.reference_b64
+        if "," in ref:          # strip "data:image/...;base64," prefix
+            ref = ref.split(",", 1)[1]
+        req_body["input_image"] = ref
 
     async with httpx.AsyncClient(timeout=180) as client:
-        # 1 — submit
         resp = await client.post(
-            "https://api.bfl.ai/v1/flux-pro-1.1",
+            f"https://api.bfl.ai/v1/{model}",
             headers={"x-key": api_key, "Content-Type": "application/json"},
-            json={
-                "prompt":             prompt,
-                "width":              832,   # closest multiples of 32 to 8.5×11
-                "height":             1088,
-                "output_format":      "jpeg",
-                "prompt_upsampling":  True,
-            },
+            json=req_body,
         )
         resp.raise_for_status()
-        data = resp.json()
+        data     = resp.json()
         poll_url = data.get("polling_url") or f"https://api.bfl.ai/v1/get_result?id={data['id']}"
 
-        # 2 — poll until Ready (up to 120 s)
         img_url = None
         for _ in range(60):
             await asyncio.sleep(2)
             r = await client.get(poll_url, headers={"x-key": api_key})
             r.raise_for_status()
-            rd = r.json()
+            rd     = r.json()
             status = rd.get("status", "")
             if status == "Ready":
                 img_url = rd["result"]["sample"]
@@ -153,11 +194,11 @@ async def generate_stationery(body: GenerateIn):
         if not img_url:
             raise HTTPException(504, "BFL generation timed out")
 
-        # 3 — download
         img_r = await client.get(img_url)
         img_r.raise_for_status()
 
-    filename = f"{body.style}_{uuid.uuid4().hex[:8]}.jpeg"
+    slug     = "custom" if body.custom_prompt.strip() else body.style
+    filename = f"{slug}_{uuid.uuid4().hex[:8]}.jpeg"
     (STATIONERY_DIR / filename).write_bytes(img_r.content)
 
     cfg["active_stationery"] = f"/stationery/{filename}"
@@ -166,7 +207,7 @@ async def generate_stationery(body: GenerateIn):
     return {"url": f"/stationery/{filename}"}
 
 
-# ── Static files ─────────────────────────────────────────────────────────────
+# ── Static files ──────────────────────────────────────────────────────────────
 
 app.mount("/stationery", StaticFiles(directory="stationery"), name="stationery")
 
