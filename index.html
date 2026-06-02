@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Handwritten Notes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Caveat+Brush&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Sacramento&family=Satisfy&family=Patrick+Hand&family=Gochi+Hand&family=Rock+Salt&family=Handlee&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink: #1B3A6B;
+      --paper: #F8F4EC;
+      --rule: rgba(100, 140, 210, 0.22);
+      --margin: rgba(220, 110, 110, 0.38);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #232B3A;
+      min-height: 100vh;
+    }
+
+    /* ── App shell ──────────────────────────────────────── */
+    .app { display: flex; min-height: 100vh; }
+
+    /* ── Controls sidebar ───────────────────────────────── */
+    .controls {
+      width: 300px;
+      min-width: 300px;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      background: #181F2E;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      padding: 14px 0;
+      background: none;
+      border: none;
+      color: #5C6A7E;
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: color 0.15s, background 0.15s;
+    }
+    .tab:hover { color: #A0AEBF; }
+    .tab.active {
+      color: #C8D8F0;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 2px solid #3B6EC8;
+    }
+
+    /* Tab panels */
+    .tab-panel { display: none; flex: 1; overflow-y: auto; }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    .panel-inner {
+      padding: 20px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      flex: 1;
+    }
+
+    /* Fields */
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: #5C6A7E;
+      font-weight: 600;
+    }
+
+    .field input,
+    .field textarea,
+    .field select {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 9px 11px;
+      color: #CDD5E2;
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      outline: none;
+      border-color: rgba(80,120,200,0.5);
+      background: rgba(255,255,255,0.07);
+    }
+    .field textarea { resize: vertical; min-height: 180px; line-height: 1.65; }
+    .field input::placeholder,
+    .field textarea::placeholder { color: #3A4559; }
+    .field select option { background: #1A2234; }
+
+    .row { display: flex; gap: 10px; }
+    .row .field { flex: 1; }
+
+    /* Buttons */
+    .btn {
+      border: none;
+      border-radius: 7px;
+      padding: 12px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      letter-spacing: 0.4px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: #1B3A6B; color: #E0EAF8; }
+    .btn-primary:hover { background: #245090; }
+    .btn-primary:disabled { background: #1a2a45; color: #4a5a7a; cursor: not-allowed; }
+    .btn-secondary { background: rgba(255,255,255,0.07); color: #A0B0C8; }
+    .btn-secondary:hover { background: rgba(255,255,255,0.11); }
+
+    .btn-print { margin-top: auto; }
+
+    /* ── Stationery panel ───────────────────────────────── */
+    .section-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: #5C6A7E;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .style-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid rgba(255,255,255,0.08);
+      border-radius: 7px;
+      padding: 9px 8px;
+      color: #8A98AA;
+      font-size: 11.5px;
+      font-family: inherit;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .style-btn:hover { background: rgba(255,255,255,0.08); color: #C0CEDC; }
+    .style-btn.selected {
+      border-color: #3B6EC8;
+      background: rgba(59,110,200,0.12);
+      color: #90B4E8;
+    }
+
+    .generate-btn {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #1B3A6B, #2C5FA8);
+      color: #E8F0FC;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .generate-btn:hover { opacity: 0.9; }
+    .generate-btn:active { transform: scale(0.97); }
+    .generate-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      display: none;
+    }
+    .generating .spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-msg {
+      font-size: 11.5px;
+      color: #5C7A9A;
+      text-align: center;
+      min-height: 18px;
+    }
+    .status-msg.error { color: #C87070; }
+    .status-msg.ok    { color: #70B870; }
+
+    /* Stationery gallery */
+    .gallery-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: #5C6A7E;
+      font-weight: 600;
+    }
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .gallery-thumb {
+      width: 68px;
+      height: 88px;
+      border-radius: 5px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 2px solid transparent;
+      position: relative;
+      transition: border-color 0.15s;
+      flex-shrink: 0;
+    }
+    .gallery-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
+    .gallery-thumb.active { border-color: #3B6EC8; }
+    .gallery-thumb.none-thumb {
+      background: rgba(255,255,255,0.04);
+      border: 2px dashed rgba(255,255,255,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #5C6A7E;
+      font-size: 10px;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .gallery-thumb.none-thumb.active { border-color: #3B6EC8; color: #90B4E8; }
+
+    /* ── Preview area ───────────────────────────────────── */
+    .preview-area {
+      flex: 1;
+      background: #2A3347;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 32px;
+      overflow-y: auto;
+    }
+
+    /* ── The Paper ──────────────────────────────────────── */
+    .paper {
+      width: 816px;
+      min-height: 1056px;
+      background-color: var(--paper);
+      background-size: cover;
+      background-position: top center;
+      flex-shrink: 0;
+      position: relative;
+      box-shadow:
+        0 2px 8px rgba(0,0,0,0.1),
+        0 10px 40px rgba(0,0,0,0.25),
+        0 32px 80px rgba(0,0,0,0.25);
+    }
+
+    /* paper grain */
+    .paper::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      background-size: 300px 300px;
+      mix-blend-mode: multiply;
+    }
+
+    /* ── CSS header ──────────────────────────────────────── */
+    .paper-head {
+      padding: 52px 72px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 7px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .monogram {
+      font-family: 'Caveat Brush', cursive;
+      font-size: 58px;
+      color: var(--ink);
+      line-height: 1;
+    }
+    .from-name {
+      font-family: 'Caveat', cursive;
+      font-size: 15px;
+      color: var(--ink);
+      letter-spacing: 4px;
+      opacity: 0.5;
+    }
+    .ornament { display: flex; align-items: center; gap: 10px; width: 58%; margin-top: 4px; }
+    .orn-line { flex: 1; height: 1px; background: linear-gradient(to right, transparent, var(--ink), transparent); opacity: 0.18; }
+    .orn-gem  { width: 5px; height: 5px; border: 1.5px solid var(--ink); transform: rotate(45deg); opacity: 0.28; flex-shrink: 0; }
+
+    /* ── Paper body ─────────────────────────────────────── */
+    .paper-body {
+      position: relative;
+      padding: 4px 72px 60px 116px;
+      min-height: 800px;
+      background-image:
+        linear-gradient(to right, transparent 91px, var(--margin) 91px, var(--margin) 92.5px, transparent 92.5px),
+        repeating-linear-gradient(to bottom, transparent 0, transparent 35px, var(--rule) 35px, var(--rule) 36px);
+      background-origin: padding-box;
+    }
+    /* When stationery is active, remove CSS rules (image has its own design) */
+    .paper.has-stationery .paper-body {
+      background-image: none;
+    }
+
+    /* Header visibility toggle */
+    .paper.hide-header .paper-head { visibility: hidden; }
+
+    /* Header toggle button */
+    .header-row { display: flex; align-items: flex-end; gap: 8px; }
+    .header-row .field { flex: 1; }
+    .eye-btn {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #5C7A9A;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+      margin-bottom: 0;
+    }
+    .eye-btn:hover { background: rgba(255,255,255,0.1); color: #90B4E8; }
+    .eye-btn.hidden-state { color: #3A4A60; }
+
+    .t-date {
+      display: flex; justify-content: flex-end;
+      font-family: var(--note-font, 'Caveat', cursive);
+      font-size: calc(var(--note-size, 22px) * 0.87); line-height: 36px; color: var(--ink);
+    }
+    .t-salutation {
+      font-family: var(--note-font, 'Caveat', cursive);
+      font-size: var(--note-size, 22px); line-height: 36px; color: var(--ink);
+    }
+    .t-body {
+      font-family: var(--note-font, 'Caveat', cursive);
+      font-size: var(--note-size, 22px); line-height: 36px; color: var(--ink);
+      min-height: 504px; word-break: break-word;
+    }
+    .t-signature-wrap { margin-top: 36px; padding-left: 180px; }
+    .t-signature {
+      font-family: var(--sig-font, 'Caveat Brush', cursive);
+      font-size: var(--sig-size, 32px); color: var(--ink);
+      display: inline-block; line-height: 1.1;
+    }
+
+    /* ── Font picker ──────────────────────────────────── */
+    .font-group-label {
+      font-size: 9.5px; text-transform: uppercase; letter-spacing: 1.2px;
+      color: #3D4D62; font-weight: 700; margin-top: 6px; margin-bottom: 2px;
+    }
+    .font-grid { display: flex; flex-direction: column; gap: 5px; }
+    .font-btn {
+      background: rgba(255,255,255,0.04);
+      border: 1.5px solid rgba(255,255,255,0.07);
+      border-radius: 7px; padding: 9px 12px;
+      color: #8A9AB0; cursor: pointer; text-align: left;
+      transition: all 0.15s; white-space: nowrap; overflow: hidden;
+    }
+    .font-btn:hover { background: rgba(255,255,255,0.08); color: #C0CEDC; }
+    .font-btn.selected { border-color: #3B6EC8; background: rgba(59,110,200,0.12); color: #90B4E8; }
+
+    /* ── Ink swatches ─────────────────────────────────── */
+    .ink-palette { display: flex; flex-wrap: wrap; gap: 8px; }
+    .ink-swatch {
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent;
+      cursor: pointer; transition: transform 0.12s, border-color 0.12s; outline: none;
+    }
+    .ink-swatch:hover { transform: scale(1.15); }
+    .ink-swatch.selected { border-color: rgba(255,255,255,0.7); }
+
+    .paper-foot { padding: 28px 72px; display: flex; justify-content: center; }
+    .foot-rule  { width: 90px; height: 1px; background: var(--ink); opacity: 0.1; }
+
+    .ch { display: inline-block; transform-origin: center 78%; }
+
+    /* ── Print ──────────────────────────────────────────── */
+    @media print {
+      body { background: white !important; }
+      .controls { display: none !important; }
+      .preview-area { padding: 0 !important; background: white !important; display: block !important; }
+      .paper { width: 100% !important; box-shadow: none !important; }
+      @page { margin: 0; size: letter portrait; }
+    }
+  </style>
+</head>
+<body>
+
+<svg style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+  <defs>
+    <filter id="hw" x="-3%" y="-3%" width="106%" height="106%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.018 0.012" numOctaves="4" seed="11" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.8" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+</svg>
+
+<div class="app">
+
+  <!-- ===== Sidebar ===== -->
+  <aside class="controls">
+
+    <!-- Tab bar -->
+    <div class="tabs">
+      <button class="tab active" id="tab-note" onclick="switchTab('note')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+        NOTE
+      </button>
+      <button class="tab" id="tab-paper" onclick="switchTab('paper')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+        </svg>
+        STATIONERY
+      </button>
+    </div>
+
+    <!-- Note panel -->
+    <div class="tab-panel active" id="panel-note">
+      <div class="panel-inner">
+        <div class="field">
+          <label>From</label>
+          <input id="from-name" type="text" value="Sunil Bhargava" placeholder="Your name">
+        </div>
+
+        <!-- Header customization -->
+        <div class="header-row">
+          <div class="field" style="flex:0 0 72px">
+            <label>Monogram</label>
+            <input id="monogram-override" type="text" maxlength="3" placeholder="auto"
+              style="text-align:center;font-family:'Caveat Brush',cursive;font-size:17px">
+          </div>
+          <div class="field">
+            <label>Header Name</label>
+            <input id="header-name-override" type="text" placeholder="auto (from name)">
+          </div>
+          <button class="eye-btn" id="eye-btn" title="Toggle header visibility" onclick="toggleHeader()">
+            <svg id="eye-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label>Salutation</label>
+            <input id="salutation" type="text" value="Dear Sarah," placeholder="Dear ...">
+          </div>
+          <div class="field">
+            <label>Date</label>
+            <input id="date" type="text" placeholder="June 2, 2026">
+          </div>
+        </div>
+        <div class="field">
+          <label>Message</label>
+          <textarea id="message" placeholder="Write your note here...">Thank you so much for a wonderful evening. The dinner was absolutely delicious and the company was even better. I feel so lucky to have friends like you in my life.
+
+I hope we can do it again soon — perhaps at our place next time?
+
+Looking forward to many more evenings like this one.</textarea>
+        </div>
+        <div class="field">
+          <label>Signature</label>
+          <input id="signature" type="text" value="Sunil" placeholder="Closing signature">
+        </div>
+        <!-- Font picker -->
+        <div class="field">
+          <label>Handwriting Style</label>
+          <div class="font-grid" id="font-grid">
+            <div class="font-group-label">Feminine</div>
+            <button class="font-btn" data-font="dancing-script" onclick="selectFont(this)"
+              style="font-family:'Dancing Script',cursive;font-size:19px">Dancing Script</button>
+            <button class="font-btn" data-font="great-vibes" onclick="selectFont(this)"
+              style="font-family:'Great Vibes',cursive;font-size:21px">Great Vibes</button>
+            <button class="font-btn" data-font="sacramento" onclick="selectFont(this)"
+              style="font-family:'Sacramento',cursive;font-size:21px">Sacramento</button>
+            <button class="font-btn" data-font="satisfy" onclick="selectFont(this)"
+              style="font-family:'Satisfy',cursive;font-size:18px">Satisfy</button>
+
+            <div class="font-group-label">Classic</div>
+            <button class="font-btn selected" data-font="caveat" onclick="selectFont(this)"
+              style="font-family:'Caveat',cursive;font-size:19px">Caveat</button>
+            <button class="font-btn" data-font="patrick-hand" onclick="selectFont(this)"
+              style="font-family:'Patrick Hand',cursive;font-size:17px">Patrick Hand</button>
+
+            <div class="font-group-label">Masculine</div>
+            <button class="font-btn" data-font="gochi-hand" onclick="selectFont(this)"
+              style="font-family:'Gochi Hand',cursive;font-size:17px">Gochi Hand</button>
+            <button class="font-btn" data-font="handlee" onclick="selectFont(this)"
+              style="font-family:'Handlee',cursive;font-size:17px">Handlee</button>
+            <button class="font-btn" data-font="rock-salt" onclick="selectFont(this)"
+              style="font-family:'Rock Salt',cursive;font-size:13px">Rock Salt</button>
+          </div>
+        </div>
+
+        <!-- Ink swatches -->
+        <div class="field">
+          <label>Ink</label>
+          <div class="ink-palette" id="ink-palette">
+            <!-- Blues -->
+            <button class="ink-swatch selected" data-ink="#1B3A6B" style="background:#1B3A6B" title="Deep Navy"></button>
+            <button class="ink-swatch" data-ink="#1a3a9f" style="background:#1a3a9f" title="Royal Blue"></button>
+            <button class="ink-swatch" data-ink="#003153" style="background:#003153" title="Prussian Blue"></button>
+            <button class="ink-swatch" data-ink="#0047AB" style="background:#0047AB" title="Cobalt Blue"></button>
+            <button class="ink-swatch" data-ink="#4682B4" style="background:#4682B4" title="Steel Blue"></button>
+            <!-- Greens -->
+            <button class="ink-swatch" data-ink="#1B5E3B" style="background:#1B5E3B" title="Forest Green"></button>
+            <button class="ink-swatch" data-ink="#1B6A5A" style="background:#1B6A5A" title="Teal"></button>
+            <!-- Reds / Purples -->
+            <button class="ink-swatch" data-ink="#6B1B1B" style="background:#6B1B1B" title="Burgundy"></button>
+            <button class="ink-swatch" data-ink="#722F37" style="background:#722F37" title="Wine Red"></button>
+            <button class="ink-swatch" data-ink="#4B0082" style="background:#4B0082" title="Violet"></button>
+            <!-- Browns -->
+            <button class="ink-swatch" data-ink="#704214" style="background:#704214" title="Sepia"></button>
+            <button class="ink-swatch" data-ink="#5C3317" style="background:#5C3317" title="Walnut"></button>
+            <!-- Darks -->
+            <button class="ink-swatch" data-ink="#1a1a2e" style="background:#1a1a2e" title="Midnight"></button>
+            <button class="ink-swatch" data-ink="#2F2F2F" style="background:#2F2F2F" title="Charcoal"></button>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-print" onclick="window.print()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Print Note
+        </button>
+      </div>
+    </div>
+
+    <!-- Stationery panel -->
+    <div class="tab-panel" id="panel-paper">
+      <div class="panel-inner">
+
+        <div class="field">
+          <label>BFL API Key</label>
+          <input id="bfl-key" type="password" placeholder="Enter your Black Forest Labs key">
+        </div>
+        <button class="btn btn-secondary" style="font-size:12px;padding:9px" onclick="saveKey()">Save Key</button>
+
+        <div class="section-label">Style</div>
+        <div class="style-grid" id="style-grid">
+          <button class="style-btn selected" data-style="classic"  onclick="selectStyle(this)">Classic Cream</button>
+          <button class="style-btn"          data-style="botanical" onclick="selectStyle(this)">Botanical</button>
+          <button class="style-btn"          data-style="artdeco"  onclick="selectStyle(this)">Art Deco</button>
+          <button class="style-btn"          data-style="minimal"  onclick="selectStyle(this)">Minimal</button>
+          <button class="style-btn"          data-style="vintage"  onclick="selectStyle(this)">Vintage</button>
+        </div>
+
+        <button class="generate-btn" id="gen-btn" onclick="generateStationery()">
+          <span class="spinner" id="spinner"></span>
+          <svg id="gen-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          <span id="gen-label">Generate with Flux</span>
+        </button>
+
+        <div class="status-msg" id="status-msg"></div>
+
+        <div class="gallery-label">Generated Stationery</div>
+        <div class="gallery" id="gallery">
+          <div class="gallery-thumb none-thumb active" id="none-thumb" onclick="applyStationery('')">
+            No<br>stationery
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ===== Preview ===== -->
+  <main class="preview-area">
+    <div class="paper" id="paper">
+
+      <header class="paper-head">
+        <div class="monogram" id="paper-mono">S</div>
+        <div class="from-name" id="paper-from">SUNIL BHARGAVA</div>
+        <div class="ornament">
+          <div class="orn-line"></div>
+          <div class="orn-gem"></div>
+          <div class="orn-line"></div>
+        </div>
+      </header>
+
+      <div class="paper-body">
+        <div class="t-date"       id="t-date" style="filter:url(#hw)"></div>
+        <div class="t-salutation" id="t-sal"  style="filter:url(#hw)"></div>
+        <div class="t-body"       id="t-body" style="filter:url(#hw)"></div>
+        <div class="t-signature-wrap">
+          <div class="t-signature" id="t-sig" style="filter:url(#hw)"></div>
+        </div>
+      </div>
+
+      <footer class="paper-foot">
+        <div class="foot-rule"></div>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+  // ── Seeded PRNG ────────────────────────────────────────
+  function sr(seed) {
+    const s = ((seed * 9301 + 49297) % 233280 + 233280) % 233280;
+    return s / 233280;
+  }
+  function esc(c) {
+    return c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c;
+  }
+
+  // ── Character-level handwriting imperfection ────────────
+  function word(str, off) {
+    const chars = str.split('').map((c, ci) => {
+      const i = off + ci;
+      const rotate  = (sr(i*7+1) - 0.5) * 7;
+      const tY      = (sr(i*7+2) - 0.5) * 2;
+      const scale   =  0.96 + sr(i*7+3) * 0.08;
+      const opacity =  0.78 + sr(i*7+4) * 0.22;
+      const skewX   = (sr(i*7+5) - 0.5) * 4;
+      return `<span class="ch" style="transform:rotate(${rotate.toFixed(2)}deg) translateY(${tY.toFixed(2)}px) scale(${scale.toFixed(4)}) skewX(${skewX.toFixed(2)}deg);opacity:${opacity.toFixed(4)}">${esc(c)}</span>`;
+    }).join('');
+    return `<span style="display:inline-block;white-space:nowrap">${chars}</span>`;
+  }
+  function render(text, base) {
+    if (!text) return '';
+    let off = base;
+    return text.split('\n').map(line => {
+      if (!line.trim()) { off += 8; return ''; }
+      return line.split(' ').map(w => {
+        if (!w) { off += 2; return ''; }
+        const h = word(w, off); off += w.length + 3; return h;
+      }).filter(Boolean).join(' ');
+    }).join('<br>');
+  }
+
+  // ── Font definitions ───────────────────────────────────
+  const FONTS = {
+    'caveat':          { body: "'Caveat', cursive",         bodySize: 22, sig: "'Caveat Brush', cursive",  sigSize: 32 },
+    'dancing-script':  { body: "'Dancing Script', cursive", bodySize: 21, sig: "'Dancing Script', cursive", sigSize: 30 },
+    'great-vibes':     { body: "'Great Vibes', cursive",    bodySize: 26, sig: "'Great Vibes', cursive",    sigSize: 36 },
+    'sacramento':      { body: "'Sacramento', cursive",     bodySize: 26, sig: "'Sacramento', cursive",     sigSize: 36 },
+    'satisfy':         { body: "'Satisfy', cursive",        bodySize: 20, sig: "'Satisfy', cursive",        sigSize: 28 },
+    'patrick-hand':    { body: "'Patrick Hand', cursive",   bodySize: 20, sig: "'Patrick Hand', cursive",   sigSize: 26 },
+    'gochi-hand':      { body: "'Gochi Hand', cursive",     bodySize: 20, sig: "'Gochi Hand', cursive",     sigSize: 26 },
+    'handlee':         { body: "'Handlee', cursive",        bodySize: 20, sig: "'Handlee', cursive",        sigSize: 26 },
+    'rock-salt':       { body: "'Rock Salt', cursive",      bodySize: 15, sig: "'Rock Salt', cursive",      sigSize: 20 },
+  };
+  let currentFont = 'caveat';
+
+  function selectFont(btn) {
+    document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    currentFont = btn.dataset.font;
+    applyFont();
+  }
+
+  function applyFont() {
+    const f = FONTS[currentFont] || FONTS['caveat'];
+    const r = document.documentElement.style;
+    r.setProperty('--note-font', f.body);
+    r.setProperty('--note-size', f.bodySize + 'px');
+    r.setProperty('--sig-font',  f.sig);
+    r.setProperty('--sig-size',  f.sigSize + 'px');
+  }
+
+  // ── Ink swatch handler ─────────────────────────────────
+  document.getElementById('ink-palette').addEventListener('click', e => {
+    const btn = e.target.closest('.ink-swatch');
+    if (!btn) return;
+    document.querySelectorAll('.ink-swatch').forEach(s => s.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.documentElement.style.setProperty('--ink', btn.dataset.ink);
+  });
+
+  // ── Note update ────────────────────────────────────────
+  let headerVisible = true;
+
+  function update() {
+    const from = document.getElementById('from-name').value.trim();
+    const monoOverride = document.getElementById('monogram-override').value.trim();
+    const nameOverride = document.getElementById('header-name-override').value.trim();
+
+    // Monogram: use override, or first letter of From, or '·'
+    document.getElementById('paper-mono').textContent =
+      monoOverride || from.charAt(0).toUpperCase() || '·';
+
+    // Header name: use override, or From name (uppercased), or empty
+    document.getElementById('paper-from').textContent =
+      (nameOverride || from).toUpperCase();
+
+    document.getElementById('t-date').innerHTML = render(document.getElementById('date').value.trim(), 0);
+    document.getElementById('t-sal' ).innerHTML = render(document.getElementById('salutation').value.trim(), 400);
+    document.getElementById('t-body').innerHTML = render(document.getElementById('message').value, 800);
+    document.getElementById('t-sig' ).innerHTML = render(document.getElementById('signature').value.trim(), 6000);
+  }
+
+  function toggleHeader() {
+    headerVisible = !headerVisible;
+    document.getElementById('paper').classList.toggle('hide-header', !headerVisible);
+    const btn  = document.getElementById('eye-btn');
+    const icon = document.getElementById('eye-icon');
+    btn.classList.toggle('hidden-state', !headerVisible);
+    btn.title = headerVisible ? 'Hide header' : 'Show header';
+    icon.innerHTML = headerVisible
+      ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+      : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  }
+
+  // ── Tab switching ───────────────────────────────────────
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-'   + (name === 'note' ? 'note' : 'paper')).classList.add('active');
+    document.getElementById('panel-' + (name === 'note' ? 'note' : 'paper')).classList.add('active');
+  }
+
+  // ── Apply stationery background ─────────────────────────
+  function applyStationery(url) {
+    const paper = document.getElementById('paper');
+    if (url) {
+      paper.style.backgroundImage = `url('${url}')`;
+      paper.classList.add('has-stationery');
+    } else {
+      paper.style.backgroundImage = '';
+      paper.classList.remove('has-stationery');
+    }
+    // Update gallery selection
+    document.querySelectorAll('.gallery-thumb').forEach(t => {
+      t.classList.toggle('active', (t.dataset.url || '') === url);
+    });
+    document.getElementById('none-thumb').classList.toggle('active', !url);
+    // Persist
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({active_stationery: url})
+    }).catch(() => {});
+  }
+
+  // ── Gallery ────────────────────────────────────────────
+  function loadGallery(activeUrl) {
+    fetch('/api/stationery').then(r => r.json()).then(list => {
+      const gallery = document.getElementById('gallery');
+      // Remove old image thumbs, keep the "none" button
+      gallery.querySelectorAll('.gallery-thumb:not(.none-thumb)').forEach(el => el.remove());
+      list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'gallery-thumb' + (item.url === activeUrl ? ' active' : '');
+        div.dataset.url = item.url;
+        div.onclick = () => applyStationery(item.url);
+        const img = document.createElement('img');
+        img.src = item.url;
+        img.alt = item.filename;
+        div.appendChild(img);
+        gallery.appendChild(div);
+      });
+    }).catch(() => {});
+  }
+
+  // ── Save BFL key ────────────────────────────────────────
+  function saveKey() {
+    const key = document.getElementById('bfl-key').value.trim();
+    fetch('/api/settings', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({bfl_api_key: key})
+    }).then(() => setStatus('Key saved', 'ok')).catch(() => setStatus('Save failed', 'error'));
+  }
+
+  // ── Style selection ─────────────────────────────────────
+  let selectedStyle = 'classic';
+  function selectStyle(btn) {
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedStyle = btn.dataset.style;
+  }
+
+  // ── Generate ────────────────────────────────────────────
+  function setStatus(msg, type = '') {
+    const el = document.getElementById('status-msg');
+    el.textContent = msg;
+    el.className = 'status-msg' + (type ? ' ' + type : '');
+  }
+
+  async function generateStationery() {
+    const btn = document.getElementById('gen-btn');
+    const icon = document.getElementById('gen-icon');
+    const label = document.getElementById('gen-label');
+    btn.disabled = true;
+    btn.classList.add('generating');
+    icon.style.display = 'none';
+    label.textContent = 'Generating…';
+    setStatus('Calling Flux Pro — usually 20–40 s…');
+
+    try {
+      const r = await fetch('/api/generate-stationery', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({style: selectedStyle})
+      });
+      if (!r.ok) {
+        const err = await r.json().catch(() => ({detail: r.statusText}));
+        throw new Error(err.detail || r.statusText);
+      }
+      const data = await r.json();
+      setStatus('Done! Stationery applied.', 'ok');
+      loadGallery(data.url);
+      applyStationery(data.url);
+    } catch (e) {
+      setStatus(e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('generating');
+      icon.style.display = '';
+      label.textContent = 'Generate with Flux';
+    }
+  }
+
+  // ── Init ────────────────────────────────────────────────
+  document.getElementById('date').value = new Date().toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric'
+  });
+
+  ['from-name','monogram-override','header-name-override','salutation','message','signature','date'].forEach(id => {
+    document.getElementById(id).addEventListener('input',  update);
+    document.getElementById(id).addEventListener('change', update);
+  });
+
+  applyFont();
+
+  // Load settings from server (if running via FastAPI)
+  fetch('/api/settings').then(r => r.json()).then(s => {
+    if (s.bfl_api_key) document.getElementById('bfl-key').value = '••••••••';
+    loadGallery(s.active_stationery || '');
+    if (s.active_stationery) applyStationery(s.active_stationery);
+  }).catch(() => loadGallery(''));  // fallback: static file server, gallery stays empty
+
+  update();
+</script>
+</body>
+</html>
