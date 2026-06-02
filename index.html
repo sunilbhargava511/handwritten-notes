@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&family=Caveat+Brush&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Sacramento&family=Satisfy&family=Patrick+Hand&family=Gochi+Hand&family=Rock+Salt&family=Handlee&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -763,14 +764,24 @@ Looking forward to many more evenings like this one.</textarea>
           </div>
         </div>
 
-        <button class="btn btn-primary btn-print" onclick="window.print()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-            <polyline points="6 9 6 2 18 2 18 9"/>
-            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
-            <rect x="6" y="14" width="12" height="8"/>
-          </svg>
-          Print Note
-        </button>
+        <div style="display:flex;gap:8px;margin-top:auto">
+          <button class="btn btn-primary" style="flex:1" onclick="window.print()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polyline points="6 9 6 2 18 2 18 9"/>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+              <rect x="6" y="14" width="12" height="8"/>
+            </svg>
+            Print
+          </button>
+          <button class="btn btn-secondary" style="flex:1" id="export-btn" onclick="exportImage()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Save Image
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1222,6 +1233,43 @@ Looking forward to many more evenings like this one.</textarea>
     }, { passive: true });
     handle.addEventListener('touchend', () => handle.classList.remove('dragging'));
   })();
+
+  // ── Export as image (prints reliably on all printers) ──
+  async function exportImage() {
+    const btn = document.getElementById('export-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span style="opacity:.7;font-size:12px">Rendering…</span>';
+
+    try {
+      const paper = document.getElementById('paper');
+      // Temporarily remove SVG filter so html2canvas renders text cleanly
+      const filtered = paper.querySelectorAll('[style*="filter"]');
+      filtered.forEach(el => el.dataset.savedFilter = el.style.filter || '');
+      filtered.forEach(el => el.style.filter = 'none');
+
+      const canvas = await html2canvas(paper, {
+        scale:           2,          // 2× = 1632×2112 px — crisp at letter size
+        useCORS:         true,
+        allowTaint:      true,
+        backgroundColor: getComputedStyle(document.documentElement)
+                           .getPropertyValue('--paper').trim() || '#F8F4EC',
+        logging:         false,
+      });
+
+      // Restore filters
+      filtered.forEach(el => { el.style.filter = el.dataset.savedFilter; delete el.dataset.savedFilter; });
+
+      const link = document.createElement('a');
+      link.download = 'handwritten-note.jpg';
+      link.href = canvas.toDataURL('image/jpeg', 0.95);
+      link.click();
+    } catch (e) {
+      alert('Export failed: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Save Image`;
+    }
+  }
 
   applyFont();
 
