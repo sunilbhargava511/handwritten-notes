@@ -72,10 +72,12 @@ def list_stationery():
 
 # ── Stationery prompts ────────────────────────────────────────────────────────
 
-# Suffix appended to every prompt to ensure stationery is usable for writing
+# Suffix appended to every prompt to ensure stationery is usable for writing.
+# NOTE: No ruled lines in the image — lines are handled by the CSS overlay.
 _SUFFIX = (
     " Decorative elements ONLY at the very top header and narrow side margins. "
-    "The lower three-quarters must be a clear, light, open writing area with faint ruled lines. "
+    "The lower three-quarters must be a clear, smooth, PLAIN writing area with NO ruled lines, "
+    "NO horizontal lines, NO line markings of any kind — just clean paper texture. "
     "Portrait 8.5x11 paper ratio. No text, no words, no handwriting. Flat lay top-down."
 )
 
@@ -90,41 +92,41 @@ PROMPTS: dict[str, str] = {
         "Personal stationery with soft watercolor botanical illustration. "
         "Delicate flowers and eucalyptus leaves in dusty rose and sage green, "
         "clustered ONLY in the top header band and optionally small accents in the bottom corners. "
-        "Clean cream center writing area with faint pale blue ruled lines."
+        "Clean cream writing area, no lines."
         + _SUFFIX
     ),
     "artdeco": (
         "Art Deco personal stationery letterhead. "
         "Geometric gold and deep navy ornamental motifs confined to the top 25% header band, "
         "symmetrical fan and diamond patterns, 1920s luxury aesthetic. "
-        "Cream paper below with very faint ruled lines for writing."
+        "Cream paper writing area, no ruled lines."
         + _SUFFIX
     ),
     "minimal": (
         "Ultra-minimalist personal stationery. "
         "Warm white natural linen paper. Single thin elegant border line at the very top. "
         "Tiny delicate botanical ink sprig ONLY in the upper-right corner of the header. "
-        "Vast clean writing area below with barely-visible ruled lines. Scandinavian aesthetic."
+        "Vast clean writing area below, no lines. Scandinavian aesthetic."
         + _SUFFIX
     ),
     "vintage": (
         "Vintage aged personal letter stationery. "
         "Warm sepia-toned antique paper with subtle yellowing. "
         "Ornate Victorian scrollwork border band at the very top only. "
-        "Large open writing area below with faint aged ruled lines."
+        "Large open writing area below, no lines."
         + _SUFFIX
     ),
     "japanese": (
         "Japanese minimalist personal stationery. "
         "Delicate cherry blossom branch watercolor painting ONLY along the top header band, "
         "soft pink and white tones on warm ivory washi-like paper. "
-        "Vast serene writing area below with very faint pale grey ruled lines."
+        "Vast serene writing area below, no lines."
         + _SUFFIX
     ),
     "floral_border": (
         "Elegant personal stationery with a floral border frame. "
         "Detailed watercolor roses and greenery forming a decorative band ONLY at the top. "
-        "Cream paper writing area below with faint ruled lines."
+        "Cream paper writing area, no lines."
         + _SUFFIX
     ),
 }

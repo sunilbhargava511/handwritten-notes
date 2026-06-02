@@ -340,8 +340,11 @@
     }
     /* When stationery is active, remove CSS rules (image has its own design) */
     .paper.has-stationery .paper-body { background-image: none !important; }
-    /* When lines toggled off */
-    .paper.no-lines .paper-body       { background-image: none !important; }
+    /* When lines toggled off — also overlay solid paper color to hide any lines baked into stationery image */
+    .paper.no-lines .paper-body {
+      background-image: none !important;
+      background-color: var(--paper) !important;
+    }
 
     /* ── Drag handle ─────────────────────────────────────── */
     .drag-handle {
