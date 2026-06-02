@@ -338,11 +338,10 @@
         repeating-linear-gradient(to bottom, transparent 0, transparent 35px, var(--rule) 35px, var(--rule) 36px);
       background-origin: padding-box;
     }
-    /* When stationery is active, or lines hidden, remove CSS rules */
-    .paper.has-stationery .paper-body,
-    .paper.no-lines .paper-body {
-      background-image: none;
-    }
+    /* When stationery is active, remove CSS rules (image has its own design) */
+    .paper.has-stationery .paper-body { background-image: none !important; }
+    /* When lines toggled off */
+    .paper.no-lines .paper-body       { background-image: none !important; }
 
     /* ── Drag handle ─────────────────────────────────────── */
     .drag-handle {
@@ -1168,7 +1167,10 @@ Looking forward to many more evenings like this one.</textarea>
   function toggleLines() {
     linesVisible = !linesVisible;
     document.getElementById('paper').classList.toggle('no-lines', !linesVisible);
-    document.getElementById('lines-toggle').textContent = linesVisible ? 'Lines ✓' : 'Lines ✗';
+    const btn = document.getElementById('lines-toggle');
+    btn.textContent  = linesVisible ? 'Lines ✓' : 'Lines ✗';
+    btn.style.color  = linesVisible ? '' : '#C87070';
+    btn.style.borderColor = linesVisible ? '' : 'rgba(200,112,112,0.4)';
   }
 
   function resetLayout() {
