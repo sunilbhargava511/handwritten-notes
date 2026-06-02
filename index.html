@@ -338,8 +338,9 @@
         repeating-linear-gradient(to bottom, transparent 0, transparent 35px, var(--rule) 35px, var(--rule) 36px);
       background-origin: padding-box;
     }
-    /* When stationery is active, remove CSS rules (image has its own design) */
-    .paper.has-stationery .paper-body {
+    /* When stationery is active, or lines hidden, remove CSS rules */
+    .paper.has-stationery .paper-body,
+    .paper.no-lines .paper-body {
       background-image: none;
     }
 
@@ -718,7 +719,10 @@ Looking forward to many more evenings like this one.</textarea>
         <div class="field">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
             <label style="margin-bottom:0">Writing Area</label>
-            <button class="btn-reset-layout" onclick="resetLayout()">Reset</button>
+            <div style="display:flex;gap:6px">
+              <button class="btn-reset-layout" id="lines-toggle" onclick="toggleLines()" title="Show/hide ruled lines">Lines ✓</button>
+              <button class="btn-reset-layout" onclick="resetLayout()">Reset</button>
+            </div>
           </div>
           <div class="layout-slider">
             <div class="layout-slider-row">
@@ -1140,6 +1144,13 @@ Looking forward to many more evenings like this one.</textarea>
     document.getElementById('val-top').textContent   = top;
     document.getElementById('val-left').textContent  = left;
     document.getElementById('val-right').textContent = right;
+  }
+
+  let linesVisible = true;
+  function toggleLines() {
+    linesVisible = !linesVisible;
+    document.getElementById('paper').classList.toggle('no-lines', !linesVisible);
+    document.getElementById('lines-toggle').textContent = linesVisible ? 'Lines ✓' : 'Lines ✗';
   }
 
   function resetLayout() {
