@@ -454,7 +454,7 @@
       font-size: var(--note-size, 22px);
       font-weight: var(--font-weight, 400);
       line-height: 36px; color: var(--ink);
-      min-height: 504px; word-break: break-word;
+      word-break: break-word;
     }
     .t-signature-wrap { margin-top: 36px; padding-left: 180px; }
     .t-signature {
@@ -889,15 +889,15 @@ Looking forward to many more evenings like this one.</textarea>
 
   // ── Font definitions ───────────────────────────────────
   const FONTS = {
-    'caveat':          { body: "'Caveat', cursive",         bodySize: 22, sig: "'Caveat Brush', cursive",  sigSize: 32 },
-    'dancing-script':  { body: "'Dancing Script', cursive", bodySize: 21, sig: "'Dancing Script', cursive", sigSize: 30 },
-    'great-vibes':     { body: "'Great Vibes', cursive",    bodySize: 26, sig: "'Great Vibes', cursive",    sigSize: 36 },
-    'sacramento':      { body: "'Sacramento', cursive",     bodySize: 26, sig: "'Sacramento', cursive",     sigSize: 36 },
-    'satisfy':         { body: "'Satisfy', cursive",        bodySize: 20, sig: "'Satisfy', cursive",        sigSize: 28 },
-    'patrick-hand':    { body: "'Patrick Hand', cursive",   bodySize: 20, sig: "'Patrick Hand', cursive",   sigSize: 26 },
-    'gochi-hand':      { body: "'Gochi Hand', cursive",     bodySize: 20, sig: "'Gochi Hand', cursive",     sigSize: 26 },
-    'handlee':         { body: "'Handlee', cursive",        bodySize: 20, sig: "'Handlee', cursive",        sigSize: 26 },
-    'rock-salt':       { body: "'Rock Salt', cursive",      bodySize: 15, sig: "'Rock Salt', cursive",      sigSize: 20 },
+    'caveat':          { body: "'Caveat', cursive",         bodySize: 22, sigSize: 32 },
+    'dancing-script':  { body: "'Dancing Script', cursive", bodySize: 21, sigSize: 30 },
+    'great-vibes':     { body: "'Great Vibes', cursive",    bodySize: 26, sigSize: 36 },
+    'sacramento':      { body: "'Sacramento', cursive",     bodySize: 26, sigSize: 36 },
+    'satisfy':         { body: "'Satisfy', cursive",        bodySize: 20, sigSize: 28 },
+    'patrick-hand':    { body: "'Patrick Hand', cursive",   bodySize: 20, sigSize: 26 },
+    'gochi-hand':      { body: "'Gochi Hand', cursive",     bodySize: 20, sigSize: 26 },
+    'handlee':         { body: "'Handlee', cursive",        bodySize: 20, sigSize: 26 },
+    'rock-salt':       { body: "'Rock Salt', cursive",      bodySize: 15, sigSize: 20 },
   };
   let currentFont = 'caveat';
 
@@ -915,7 +915,7 @@ Looking forward to many more evenings like this one.</textarea>
     const r = document.documentElement.style;
     r.setProperty('--note-font',   f.body);
     r.setProperty('--note-size',   f.bodySize + 'px');
-    r.setProperty('--sig-font',    f.sig);
+    r.setProperty('--sig-font',    f.body);
     r.setProperty('--sig-size',    f.sigSize + 'px');
     r.setProperty('--font-weight', currentWeight);
   }
