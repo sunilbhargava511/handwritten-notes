@@ -327,10 +327,14 @@
     /* ── Paper body ─────────────────────────────────────── */
     .paper-body {
       position: relative;
-      padding: 4px 72px 60px 116px;
+      margin-top: var(--body-top, 0px);
+      padding-top: 4px;
+      padding-bottom: 60px;
+      padding-left: var(--body-left, 116px);
+      padding-right: var(--body-right, 72px);
       min-height: 800px;
       background-image:
-        linear-gradient(to right, transparent 91px, var(--margin) 91px, var(--margin) 92.5px, transparent 92.5px),
+        linear-gradient(to right, transparent calc(var(--body-left, 116px) - 25px), var(--margin) calc(var(--body-left, 116px) - 25px), var(--margin) calc(var(--body-left, 116px) - 23.5px), transparent calc(var(--body-left, 116px) - 23.5px)),
         repeating-linear-gradient(to bottom, transparent 0, transparent 35px, var(--rule) 35px, var(--rule) 36px);
       background-origin: padding-box;
     }
@@ -338,6 +342,75 @@
     .paper.has-stationery .paper-body {
       background-image: none;
     }
+
+    /* ── Drag handle ─────────────────────────────────────── */
+    .drag-handle {
+      position: absolute;
+      top: -14px;
+      left: 0; right: 0;
+      height: 28px;
+      cursor: ns-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      user-select: none;
+    }
+    .drag-handle::before {
+      content: '';
+      width: 48px; height: 4px;
+      border-radius: 2px;
+      background: rgba(100, 140, 210, 0.2);
+      transition: background 0.15s, width 0.15s;
+    }
+    .drag-handle:hover::before,
+    .drag-handle.dragging::before {
+      background: rgba(100, 140, 210, 0.55);
+      width: 64px;
+    }
+
+    /* ── Layout sliders ──────────────────────────────────── */
+    .layout-slider {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .layout-slider-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .layout-slider label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: #5C6A7E;
+      font-weight: 600;
+    }
+    .layout-slider input[type=range] {
+      flex: 1;
+      accent-color: #3B6EC8;
+      height: 3px;
+      cursor: pointer;
+    }
+    .layout-slider .val {
+      font-size: 10.5px;
+      color: #5C7A9A;
+      min-width: 28px;
+      text-align: right;
+    }
+    .btn-reset-layout {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 11px;
+      color: #5C6A7E;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .btn-reset-layout:hover { color: #A0B4C8; border-color: rgba(255,255,255,0.18); }
 
     /* Header visibility toggle */
     .paper.hide-header .paper-head { visibility: hidden; }
@@ -641,6 +714,31 @@ Looking forward to many more evenings like this one.</textarea>
             <button class="ink-swatch" data-ink="#2F2F2F" style="background:#2F2F2F" title="Charcoal"></button>
           </div>
         </div>
+        <!-- Writing area layout -->
+        <div class="field">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <label style="margin-bottom:0">Writing Area</label>
+            <button class="btn-reset-layout" onclick="resetLayout()">Reset</button>
+          </div>
+          <div class="layout-slider">
+            <div class="layout-slider-row">
+              <span style="font-size:10px;color:#5C6A7E;width:52px">Top</span>
+              <input type="range" id="sl-top"   min="-180" max="420" value="0"   oninput="setLayout()">
+              <span class="val" id="val-top">0</span>
+            </div>
+            <div class="layout-slider-row">
+              <span style="font-size:10px;color:#5C6A7E;width:52px">Left</span>
+              <input type="range" id="sl-left"  min="32"   max="240" value="116" oninput="setLayout()">
+              <span class="val" id="val-left">116</span>
+            </div>
+            <div class="layout-slider-row">
+              <span style="font-size:10px;color:#5C6A7E;width:52px">Right</span>
+              <input type="range" id="sl-right" min="24"   max="200" value="72"  oninput="setLayout()">
+              <span class="val" id="val-right">72</span>
+            </div>
+          </div>
+        </div>
+
         <button class="btn btn-primary btn-print" onclick="window.print()">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
             <polyline points="6 9 6 2 18 2 18 9"/>
@@ -727,7 +825,8 @@ Looking forward to many more evenings like this one.</textarea>
         </div>
       </header>
 
-      <div class="paper-body">
+      <div class="paper-body" id="paper-body">
+        <div class="drag-handle" id="drag-handle" title="Drag to reposition writing area"></div>
         <div class="t-date"       id="t-date" style="filter:url(#hw)"></div>
         <div class="t-salutation" id="t-sal"  style="filter:url(#hw)"></div>
         <div class="t-body"       id="t-body" style="filter:url(#hw)"></div>
@@ -1028,6 +1127,68 @@ Looking forward to many more evenings like this one.</textarea>
     document.getElementById(id).addEventListener('input',  update);
     document.getElementById(id).addEventListener('change', update);
   });
+
+  // ── Writing area layout ─────────────────────────────────
+  function setLayout() {
+    const top   = parseInt(document.getElementById('sl-top').value);
+    const left  = parseInt(document.getElementById('sl-left').value);
+    const right = parseInt(document.getElementById('sl-right').value);
+    const r = document.documentElement.style;
+    r.setProperty('--body-top',   top   + 'px');
+    r.setProperty('--body-left',  left  + 'px');
+    r.setProperty('--body-right', right + 'px');
+    document.getElementById('val-top').textContent   = top;
+    document.getElementById('val-left').textContent  = left;
+    document.getElementById('val-right').textContent = right;
+  }
+
+  function resetLayout() {
+    document.getElementById('sl-top').value   = 0;
+    document.getElementById('sl-left').value  = 116;
+    document.getElementById('sl-right').value = 72;
+    setLayout();
+  }
+
+  // ── Drag handle ─────────────────────────────────────────
+  (function () {
+    const handle = document.getElementById('drag-handle');
+    let startY, startTop;
+
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      startY   = e.clientY;
+      startTop = parseInt(document.getElementById('sl-top').value);
+      handle.classList.add('dragging');
+
+      const onMove = e => {
+        const delta  = e.clientY - startY;
+        const newTop = Math.max(-180, Math.min(420, startTop + delta));
+        document.getElementById('sl-top').value = newTop;
+        setLayout();
+      };
+      const onUp = () => {
+        handle.classList.remove('dragging');
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup',   onUp);
+      };
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup',   onUp);
+    });
+
+    // Touch support
+    handle.addEventListener('touchstart', e => {
+      startY   = e.touches[0].clientY;
+      startTop = parseInt(document.getElementById('sl-top').value);
+      handle.classList.add('dragging');
+    }, { passive: true });
+    handle.addEventListener('touchmove', e => {
+      const delta  = e.touches[0].clientY - startY;
+      const newTop = Math.max(-180, Math.min(420, startTop + delta));
+      document.getElementById('sl-top').value = newTop;
+      setLayout();
+    }, { passive: true });
+    handle.addEventListener('touchend', () => handle.classList.remove('dragging'));
+  })();
 
   applyFont();
 
